@@ -30,9 +30,11 @@ with audio.AudioClassifier.create_from_options(options) as classifier:
   classification_result_list = classifier.classify(audio_clip)
 
   #assert(len(classification_result_list) == 5)
+detected_categories = []
 
 # Iterate through clips to display classifications
-  for idx, timestamp in enumerate([1000, 2000, 3000, 4000, 5000, 6000]):    #enumerate([0, 975, 1950, 2925]):
+for idx, timestamp in enumerate([1000, 2000, 3000, 4000, 5000, 6000]):    #enumerate([0, 975, 1950, 2925]):
     classification_result = classification_result_list[idx]
     top_category = classification_result.classifications[0].categories[0]
+    detected_categories.append(top_category.category_name)
     print(f'Timestamp {timestamp}: {top_category.category_name} ({top_category.score:.2f})')
