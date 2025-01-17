@@ -7,12 +7,14 @@ from mediapipe.tasks.python.components import containers
 from mediapipe.tasks.python import audio
 from scipy.io import wavfile
 
+from soundReader import Recorder
+
 #audio_file_name = 'speech_16000_hz_mono.wav'
 #url = f'https://storage.googleapis.com/mediapipe-assets/{audio_file_name}'
 #urllib.request.urlretrieve(url, audio_file_name)
 
 
-file_name = 'data/bell-ringing-01c.wav'
+file_name = 'testData/bell-ringing-01c.wav'
 #file_name = 'speech_16000_hz_mono.wav'
 #display(Audio(file_name, autoplay=False))
 model_path = '/model/yamnet.tflite'
