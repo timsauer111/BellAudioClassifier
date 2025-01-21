@@ -22,7 +22,7 @@ class Recorder:
         print("Conversion complete.")
         return numpydata
     
-    def record_wav(self, filename):
+    def safe_wav(self, filename):
         numpydata = self.record_buffer()
         print(f'Saving to {filename}...')
         wav.write(filename, self.rate, numpydata)

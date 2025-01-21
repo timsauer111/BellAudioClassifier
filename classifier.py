@@ -14,7 +14,7 @@ AudioClassifierOptions = mp.tasks.audio.AudioClassifierOptions
 AudioClassifierResult = mp.tasks.audio.AudioClassifierResult
 AudioRunningMode = mp.tasks.audio.RunningMode
 BaseOptions = mp.tasks.BaseOptions
-model_path = '/model/yamnet.tflite'
+model_path = 'model/yamnet.tflite' # Path to the model file
 
 def print_result(result, timestamp_ms: int):
     print(f"Timestamp: {timestamp_ms}\n Result: {result}\n\n")
@@ -33,11 +33,9 @@ with AudioClassifier.create_from_options(options) as classifier:
     print("Transferring buffer to AudioData...")
     audio_data = AudioData.create_from_array(buffer.astype(float) / np.iinfo(np.int16).max, rec.rate)
 
-    for timestamp_ms in enumerate([500, 1000, 1500]):
+    for timestamp_ms in [500, 1000, 1500]:
         classifier.classify_async(audio_data, timestamp_ms)
         # Wait for the result.
-        result = classifier.get_result()
-        print_result(result, timestamp_ms)
     
     rec.close()
 
