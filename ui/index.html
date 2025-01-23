@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+    
+{% block content %}
+    {% if running %}
+      <h2>Made shots: {{ made_shots }}</h2>
+      <form action="/stop" method="POST">
+        <button type="submit">Stop</button>
+      </form>
+      <form action="/quit" method="POST">
+        <button type="submit">Quit</button>
+      </form>
+    {% else %}
+      <form action="/start" method="POST">
+        <button type="submit">Start</button>
+      </form>
+    {% endif %}
+{% endblock %}
