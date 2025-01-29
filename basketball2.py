@@ -11,7 +11,7 @@ def bandpass_filter(signal, lowcut, highcut, sr, order=5):
     b, a = butter(order, [low, high], btype='band')
     return lfilter(b, a, signal)
 
-def erkenne_basketball_dribbling(audio_datei, schwellenwert_amplitude=0.05, frequenzbereich=(50, 200)):
+def erkenne_basketball_dribbling(schwellenwert_amplitude=0.05, frequenzbereich=(50, 200), record_seconds = 10):
     """
     Prüft, ob eine Audiodatei Basketball-Dribblings enthält.
 
@@ -21,18 +21,32 @@ def erkenne_basketball_dribbling(audio_datei, schwellenwert_amplitude=0.05, freq
     :return: Gibt "Dribbling erkannt" aus, wenn ein Basketball-Dribbling erkannt wurde.
     """
     try:
-        # Audiodatei laden
         """
+        # Audiodatei laden        
         audio, sr = librosa.load(audio_datei, sr=None)
-        """
         
-        rec = Recorder(rate=44100, record_seconds=2, chunksize=1024)
-        audio, sr = rec.record_buffer(), 44100
+        rec = Recorder(rate=44100, record_seconds=record_seconds, chunksize=1024)
 
-        gefiltertes_signal = bandpass_filter(audio, lowcut=50, highcut=200, sr=sr)
+        # Aufnahme vom Mikrofon starten
+        audio_buffer = rec.record_buffer()
+
+        # Verarbeite die Audiodaten, die vom Mikrofon aufgenommen wurden
+        sr = 44100  # Sample-Rate setzen (kann je nach Mikrofon angepasst werden)"""
+
+        recorder = Recorder(rate=44100, record_seconds=record_seconds, chunksize=1024)
+        audio = recorder.record_buffer()  # Audio aufnehmen
+        sr = 44100  # Sample-Rate für das Mikrofon
+
+        audio = audio.astype(np.float32) / np.iinfo(np.int16).max
+
+        gefiltertes_signal = bandpass_filter(audio, lowcut=frequenzbereich[0], highcut=frequenzbereich[1], sr=sr)
+        
+        
+        
+        #gefiltertes_signal = bandpass_filter(audio, lowcut=50, highcut=200, sr=sr)
 
         # Kurzzeit-Fourier-Transformation (STFT)
-        print(np.abs(librosa.stft(audio)))
+        #print(np.abs(librosa.stft(audio)))
         stft = np.abs(librosa.stft(audio))
 
         # Berechnung der mittleren Amplitude
@@ -65,9 +79,15 @@ def erkenne_basketball_dribbling(audio_datei, schwellenwert_amplitude=0.05, freq
     except Exception as e:
         print(f"Fehler bei der Verarbeitung der Datei: {e}")
 
+
+# Beispielaufruf der Funktion zur Mikrofonaufnahme
+erkenne_basketball_dribbling(record_seconds=10)  # 2 Sekunden Aufnahme
+
 # Beispielaufruf mit Dateiprüfung
+"""
 audio_datei_pfad = "//workspaces//185091470//dribbling.wav"  # Ersetze mit dem korrekten Pfad
 if os.path.exists(audio_datei_pfad):
     erkenne_basketball_dribbling(audio_datei_pfad)
 else:
     print(f"Datei nicht gefunden: {audio_datei_pfad}")
+"""
