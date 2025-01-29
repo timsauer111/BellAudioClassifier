@@ -2,6 +2,7 @@ import librosa
 import numpy as np
 import os
 from scipy.signal import butter, lfilter
+from soundReader import Recorder
 
 def bandpass_filter(signal, lowcut, highcut, sr, order=5):
     nyquist = 0.5 * sr
@@ -21,7 +22,12 @@ def erkenne_basketball_dribbling(audio_datei, schwellenwert_amplitude=0.05, freq
     """
     try:
         # Audiodatei laden
+        """
         audio, sr = librosa.load(audio_datei, sr=None)
+        """
+        
+        rec = Recorder(rate=44100, record_seconds=2, chunksize=1024)
+        audio, sr = rec.record_buffer(), 44100
 
         gefiltertes_signal = bandpass_filter(audio, lowcut=50, highcut=200, sr=sr)
 
