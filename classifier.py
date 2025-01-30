@@ -1,6 +1,6 @@
 """
 This script uses MediaPipe's AudioClassifier to record short audio
-samples and classify them. The results are printed to the console.
+samples and classify them. The results are returned.
 """
 
 from IPython.display import Audio, display
@@ -13,6 +13,8 @@ from mediapipe.tasks.python import audio
 from scipy.io import wavfile
 
 from soundReader import Recorder
+
+import time
 
 
 class Classifier():
@@ -31,12 +33,13 @@ class Classifier():
             max_results=5,
         )
 
+        # Define, which sounds should trigger the counter
+        self.classfication_set = {
+                                'Bell', 'Church bell', 'Doorbell', 'Jingle bell', 'Tolling bell', 
+                                  'Glockenspiel', 'Tambourine', 'Maraca', 'Sleigh bell', 
+                                  'tinkle', 'jingle', 'Ding'
+                                  }
 
-    """
-    def start_classifier(self):
-        with self.AudioClassifier.create_from_options(self.options) as classifier:
-            # The 'classify_input_audio' function handles audio recording and classification.
-    """
     def classify_input_audio(self, classifier):
         """
         Records short audio samples, processes them via AudioClassifier, 
@@ -44,6 +47,7 @@ class Classifier():
 
         :return: A list of string category names recognized for the recorded audio.
         """
+        time.sleep(0.5)
         # Start recording using specified sample rate and duration.
         rec = Recorder(rate=44100, record_seconds=2, chunksize=1024)
         # Fetch audio data into a numpy buffer.
