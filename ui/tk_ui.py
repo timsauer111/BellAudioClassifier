@@ -1,7 +1,7 @@
 import tkinter as tk
-from classifier import Classifier
+from classifier import start_classifier_thread
 import time
-
+import threading
 
 class BellAudioClassifierUI:
     def __init__(self, root):
@@ -31,31 +31,19 @@ class BellAudioClassifierUI:
         self.quit_button = tk.Button(self.root, text="Quit", font=("Helvetica", 18), command=self.root.quit)
         self.quit_button.pack(side=tk.RIGHT, expand=True)
 
+
         self.root.after(500, self.start_classifier)
-
+    
     def start_classifier(self):
-        self.classifier_instance = c.AudioClassifier.create_from_options(c.options)
-        self.classify_audio()
-
-    def classify_audio(self):
-        if not self.running:
-            self.classifier_instance.close()
-            return
-        results = c.classify_input_audio(self.classifier_instance)
-        if c.classfication_set.intersection(results):
-            self.increase_made_shots()
-            print(c.classify_input_audio(self.classifier_instance))
-            self.root.after(2000, self.classify_audio)
-        else:
-            print(c.classify_input_audio(self.classifier_instance))
-            self.root.after(0, self.classify_audio)
-        
-
+        start_classifier_thread(self)
+        listener = ListenerThread(self)
+        listener.start()
     
     def increase_made_shots(self):
         self.made_shots += 1
+
+    def refresh_made_shots(self):
         self.var.set(str(self.made_shots))
-        #self.made_shots_label.config(text=str(self.made_shots))
         self.root.update_idletasks()
 
     def stop(self):
@@ -79,5 +67,26 @@ class App:
         self.root.focus()
         self.root.mainloop()
 
+"""
+class RunnerThread(threading.Thread):
+    def __init__(self, app):
+        threading.Thread.__init__(self)
+        self.app = app
+        self.target = self.run_app
+
+    def run_app(self):
+        print("Running app")
+        self.app.run()
+"""
+class ListenerThread(threading.Thread):
+    def __init__(self, app):
+        threading.Thread.__init__(self)
+        self.app = app
+        self.target = self.setup_ui
+
+    def setup_ui(self):
+        while self.app.running:
+            self.app.refresh_made_shots()
+            time.sleep(1)
+
 app = App()
-c = Classifier(app)

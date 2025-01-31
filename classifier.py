@@ -17,6 +17,9 @@ from soundReader import Recorder
 import time
 
 
+import threading
+
+
 class Classifier():
     def __init__(self, app):
         self.AudioClassifier = mp.tasks.audio.AudioClassifier
@@ -25,6 +28,7 @@ class Classifier():
         self.AudioRunningMode = mp.tasks.audio.RunningMode
         self.BaseOptions = mp.tasks.BaseOptions
         self.model_path = 'model/yamnet.tflite' # Path to the model file
+        self.app = app
 
 
         self.options = self.AudioClassifierOptions(
@@ -47,7 +51,6 @@ class Classifier():
 
         :return: A list of string category names recognized for the recorded audio.
         """
-        time.sleep(0.5)
         # Start recording using specified sample rate and duration.
         rec = Recorder(rate=44100, record_seconds=2, chunksize=1024)
         # Fetch audio data into a numpy buffer.
@@ -86,10 +89,42 @@ class Classifier():
             for cat in classification.categories
         ]
         return [cat_name for _, cat_name in result_categories]
+    
+    def start_classifier(self):
+        self.classifier_instance = self.AudioClassifier.create_from_options(self.options)
+        self.classify_audio()
+
+
+    def classify_audio(self):
+        while self.app.running:
+            results = self.classify_input_audio(self.classifier_instance)
+            if self.classfication_set.intersection(results):
+                print("Bell detected")
+                self.app.increase_made_shots()
+                print(results)
+                time.sleep(2)
+                
+            else:
+                print(results)
+
+        self.classifier_instance.close()
         
 
+class ClassifierThread(threading.Thread):
+    def __init__(self, classifier):
+        threading.Thread.__init__(self)
+        self.classifier = classifier
+
+    def run(self):
+        print("Running classifier")
+        self.classifier.start_classifier()
 
 
+
+def start_classifier_thread(app):
+    c = Classifier(app)
+    classifier_thread = ClassifierThread(c)
+    classifier_thread.start()
 
 
 
