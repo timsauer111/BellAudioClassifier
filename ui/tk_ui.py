@@ -37,7 +37,7 @@ class BellAudioClassifierUI:
     
     def start_classifier(self):
         start_classifier_thread(self)
-        start_dribbling_thread()
+        #start_dribbling_thread(self)
         listener = ListenerThread(self)
         listener.start()
 
@@ -70,24 +70,13 @@ class App:
         self.root.focus()
         self.root.mainloop()
 
-"""
-class RunnerThread(threading.Thread):
-    def __init__(self, app):
-        threading.Thread.__init__(self)
-        self.app = app
-        self.target = self.run_app
-
-    def run_app(self):
-        print("Running app")
-        self.app.run()
-"""
 class ListenerThread(threading.Thread):
     def __init__(self, app):
         threading.Thread.__init__(self)
         self.app = app
-        self.target = self.setup_ui
 
-    def setup_ui(self):
+    def run(self):
+        print("Listener Thread started.")
         while self.app.running:
             self.app.refresh_made_shots()
             time.sleep(1)

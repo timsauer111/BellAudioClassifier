@@ -125,6 +125,7 @@ def start_classifier_thread(app):
     c = Classifier(app)
     classifier_thread = ClassifierThread(c)
     classifier_thread.start()
+    print("Classifier thread started")
 
 
 
