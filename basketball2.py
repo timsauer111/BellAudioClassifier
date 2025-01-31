@@ -3,6 +3,7 @@ import numpy as np
 import os
 from scipy.signal import butter, lfilter
 from soundReader import Recorder
+import threading
 
 def bandpass_filter(signal, lowcut, highcut, sr, order=5):
     nyquist = 0.5 * sr
@@ -78,6 +79,19 @@ def erkenne_basketball_dribbling(schwellenwert_amplitude=0.05, frequenzbereich=(
 
     except Exception as e:
         print(f"Fehler bei der Verarbeitung der Datei: {e}")
+
+class DribblingThread(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
+    def run(self):
+        print("Run Dribbling Classifier")
+        erkenne_basketball_dribbling()
+
+def start_dribbling_thread():
+    dribblingThread = DribblingThread()
+    dribblingThread.start()
+
+
 
 
 # Beispielaufruf der Funktion zur Mikrofonaufnahme
