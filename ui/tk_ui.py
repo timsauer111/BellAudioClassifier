@@ -1,5 +1,6 @@
 import tkinter as tk
 from classifier import start_classifier_thread
+from basketball2 import start_dribbling_thread
 import time
 import threading
 
@@ -36,8 +37,10 @@ class BellAudioClassifierUI:
     
     def start_classifier(self):
         start_classifier_thread(self)
+        start_dribbling_thread()
         listener = ListenerThread(self)
         listener.start()
+
     
     def increase_made_shots(self):
         self.made_shots += 1
