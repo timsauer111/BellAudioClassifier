@@ -16,10 +16,13 @@ def bandpass_filter(signal, lowcut, highcut, sr, order=5):
 class Basketball_Dribbling:
     def __init__(self, app):
         self.app = app
-        
 
+<<<<<<< HEAD
 
     def erkenne_basketball_dribbling(schwellenwert_amplitude=0.05, frequenzbereich=(50, 200), record_seconds = 2):
+=======
+    def erkenne_basketball_dribbling(self, schwellenwert_amplitude=0.05, frequenzbereich=(50, 200), record_seconds = 10):
+>>>>>>> refs/remotes/origin/main
         """
         Prüft, ob eine Audiodatei Basketball-Dribblings enthält.
 
@@ -80,6 +83,7 @@ class Basketball_Dribbling:
                     onsets = librosa.onset.onset_detect(y=audio, sr=sr, backtrack=True)
                     if len(onsets) > 0:
                         print(f"Basketball-Dribbling erkannt! Anzahl der Dribblings: {len(onsets)}")
+                        self.app.increase_dribblings(len(onsets))
                     else:
                         print("Kein Dribbling erkannt (keine Impulsstruktur).")
                 else:
@@ -91,21 +95,31 @@ class Basketball_Dribbling:
     #erkenne_basketball_dribbling(record_seconds=2)  # 2 Sekunden Aufnahme
 
 class DribblingThread(threading.Thread):
-    def __init__(self, classifier):
+    def __init__(self, dribbling_count):
         threading.Thread.__init__(self)
+        self.dribbling_count = dribbling_count
     def run(self):
-        print("Run Dribbling Classifier")
-        self.classifier.erkenne_basketball_dribbling()
+        self.dribbling_count.erkenne_basketball_dribbling(record_seconds=2)
 
 def start_dribbling_thread(app):
     d = Basketball_Dribbling(app)
     dribblingThread = DribblingThread(d)
     dribblingThread.start()
+    print("Dribbling Thread started.")
 
 
 """"
 Beispielaufruf mit Dateiprüfung
 
+<<<<<<< HEAD
+=======
+
+# Beispielaufruf der Funktion zur Mikrofonaufnahme
+ # 2 Sekunden Aufnahme
+
+# Beispielaufruf mit Dateiprüfung
+"""
+>>>>>>> refs/remotes/origin/main
 audio_datei_pfad = "//workspaces//185091470//dribbling.wav"  # Ersetze mit dem korrekten Pfad
 if os.path.exists(audio_datei_pfad):
 erkenne_basketball_dribbling(audio_datei_pfad)
