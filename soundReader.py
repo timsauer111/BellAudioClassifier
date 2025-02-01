@@ -40,10 +40,7 @@ class Recorder:
         for _ in range(0, int(self.rate / self.chunksize * self.record_seconds)):
             data = self.stream.read(self.chunksize)
             frames.append(np.frombuffer(data, dtype=np.int16))
-        print('Recording complete.')
-        print("Converting...")
         numpydata = np.hstack(frames)  # Combine buffers into one NumPy array
-        print("Conversion complete.")
         return numpydata
 
     def safe_wav(self, filename):

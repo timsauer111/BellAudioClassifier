@@ -5,6 +5,12 @@ import time
 import threading
 
 class BellAudioClassifierUI:
+    """
+    A Tkinter-based user interface for controlling the audio classifier
+    and displaying classification results.
+
+    :param root: The root Tk window for the UI.
+    """
     def __init__(self, root):
         self.root = root
         self.root.title("Bell Audio Classifier")
@@ -23,6 +29,9 @@ class BellAudioClassifierUI:
         self.start_button.pack(expand=True)
         
     def start(self):
+        """
+        Initializes and displays UI elements, then starts the classification process.
+        """
         self.running = True
         self.start_button.pack_forget()
         
@@ -52,20 +61,37 @@ class BellAudioClassifierUI:
         listener.start()
 
     def increase_made_shots(self):
+        """
+        Increments the made_shots counter when a bell sound is detected.
+        """
         self.made_shots += 1
 
     def increase_dribblings(self, dribblings):
+        """
+        Increments the dribblings counter by a specified amount.
+
+        :param dribblings: Number of dribbles to add.
+        """
         self.dribblings += dribblings
 
     def refresh_made_shots(self):
+        """
+        Updates the displayed made_shots counter in the UI.
+        """
         self.var.set(str(self.made_shots))
         self.root.update_idletasks()
 
     def refresh_dribblings(self):
+        """
+        Updates the displayed dribblings counter in the UI.
+        """
         self.var_dribblings.set(str(self.dribblings))
         self.root.update_idletasks()
 
     def stop(self):
+        """
+        Stops the classification process, resets counters, and shows the start button again.
+        """
         self.running = False
         self.made_shots_label.pack_forget()
         self.description_label.pack_forget()
@@ -80,10 +106,16 @@ class BellAudioClassifierUI:
         self.var_dribblings.set(str(self.dribblings))
 
     def quit(self):
+        """
+        Quits the application by terminating the Tkinter main loop.
+        """
         self.running = False
         self.root.quit()
 
 class App:
+    """
+    Manages the root window and initializes the BellAudioClassifierUI.
+    """
     def __init__(self):
         self.root = tk.Tk()
         self.root.attributes("-topmost", True)
@@ -95,11 +127,17 @@ class App:
         self.root.mainloop()
 
 class ListenerThread(threading.Thread):
+    """
+    Periodically refreshes the UI counters in a separate thread.
+    """
     def __init__(self, app):
         threading.Thread.__init__(self)
         self.app = app
 
     def run(self):
+        """
+        Continuously updates the made_shots and dribblings counters while the app is running.
+        """
         print("Listener Thread started.")
         while self.app.running:
             self.app.refresh_made_shots()

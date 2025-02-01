@@ -92,13 +92,13 @@ class DribblingThread(threading.Thread):
         threading.Thread.__init__(self)
         self.dribbling_count = dribbling_count
     def run(self):
-        print("Run Dribbling Classifier")
         self.dribbling_count.erkenne_basketball_dribbling(record_seconds=2)
 
 def start_dribbling_thread(app):
     d = Basketball_Dribbling(app)
     dribblingThread = DribblingThread(d)
     dribblingThread.start()
+    print("Dribbling Thread started.")
 
 
 
