@@ -11,13 +11,13 @@ def bandpass_filter(signal, lowcut, highcut, sr, order=5):
     high = highcut / nyquist
     b, a = butter(order, [low, high], btype='band')
     return lfilter(b, a, signal)
+
+
 class Basketball_Dribbling:
     def __init__(self, app):
         self.app = app
-        
 
-
-    def erkenne_basketball_dribbling(schwellenwert_amplitude=0.05, frequenzbereich=(50, 200), record_seconds = 10):
+    def erkenne_basketball_dribbling(self, schwellenwert_amplitude=0.05, frequenzbereich=(50, 200), record_seconds = 10):
         """
         Prüft, ob eine Audiodatei Basketball-Dribblings enthält.
 
@@ -78,6 +78,7 @@ class Basketball_Dribbling:
                     onsets = librosa.onset.onset_detect(y=audio, sr=sr, backtrack=True)
                     if len(onsets) > 0:
                         print(f"Basketball-Dribbling erkannt! Anzahl der Dribblings: {len(onsets)}")
+                        self.app.increase_dribblings(len(onsets))
                     else:
                         print("Kein Dribbling erkannt (keine Impulsstruktur).")
                 else:
@@ -87,11 +88,12 @@ class Basketball_Dribbling:
                 print(f"Fehler bei der Verarbeitung der Datei: {e}")
 
 class DribblingThread(threading.Thread):
-    def __init__(self, classifier):
+    def __init__(self, dribbling_count):
         threading.Thread.__init__(self)
+        self.dribbling_count = dribbling_count
     def run(self):
         print("Run Dribbling Classifier")
-        self.classifier.erkenne_basketball_dribbling()
+        self.dribbling_count.erkenne_basketball_dribbling(record_seconds=2)
 
 def start_dribbling_thread(app):
     d = Basketball_Dribbling(app)
@@ -102,7 +104,7 @@ def start_dribbling_thread(app):
 
 
 # Beispielaufruf der Funktion zur Mikrofonaufnahme
-erkenne_basketball_dribbling(record_seconds=10)  # 2 Sekunden Aufnahme
+ # 2 Sekunden Aufnahme
 
 # Beispielaufruf mit Dateiprüfung
 """
