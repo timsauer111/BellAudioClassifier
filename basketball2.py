@@ -11,13 +11,15 @@ def bandpass_filter(signal, lowcut, highcut, sr, order=5):
     high = highcut / nyquist
     b, a = butter(order, [low, high], btype='band')
     return lfilter(b, a, signal)
+
+
 class Basketball_Dribbling:
     def __init__(self, app):
         self.app = app
         
 
 
-    def erkenne_basketball_dribbling(schwellenwert_amplitude=0.05, frequenzbereich=(50, 200), record_seconds = 10):
+    def erkenne_basketball_dribbling(schwellenwert_amplitude=0.05, frequenzbereich=(50, 200), record_seconds = 2):
         """
         Prüft, ob eine Audiodatei Basketball-Dribblings enthält.
 
@@ -40,7 +42,7 @@ class Basketball_Dribbling:
                 # Verarbeite die Audiodaten, die vom Mikrofon aufgenommen wurden
                 sr = 44100  # Sample-Rate setzen (kann je nach Mikrofon angepasst werden)"""
 
-                recorder = Recorder(rate=44100, record_seconds=record_seconds, chunksize=1024)
+                recorder = Recorder(rate=44100, record_seconds, chunksize=1024)
                 audio = recorder.record_buffer()  # Audio aufnehmen
                 sr = 44100  # Sample-Rate für das Mikrofon
 
@@ -53,7 +55,7 @@ class Basketball_Dribbling:
                 #gefiltertes_signal = bandpass_filter(audio, lowcut=50, highcut=200, sr=sr)
 
                 # Kurzzeit-Fourier-Transformation (STFT)
-                #print(np.abs(librosa.stft(audio)))
+                print(np.abs(librosa.stft(audio)))
                 stft = np.abs(librosa.stft(audio))
 
                 # Berechnung der mittleren Amplitude
@@ -85,6 +87,8 @@ class Basketball_Dribbling:
 
             except Exception as e:
                 print(f"Fehler bei der Verarbeitung der Datei: {e}")
+    #Beispielaufruf der Funktion zur Mikrofonaufnahme
+    #erkenne_basketball_dribbling(record_seconds=2)  # 2 Sekunden Aufnahme
 
 class DribblingThread(threading.Thread):
     def __init__(self, classifier):
@@ -99,13 +103,9 @@ def start_dribbling_thread(app):
     dribblingThread.start()
 
 
+""""
+Beispielaufruf mit Dateiprüfung
 
-
-# Beispielaufruf der Funktion zur Mikrofonaufnahme
-erkenne_basketball_dribbling(record_seconds=10)  # 2 Sekunden Aufnahme
-
-# Beispielaufruf mit Dateiprüfung
-"""
 audio_datei_pfad = "//workspaces//185091470//dribbling.wav"  # Ersetze mit dem korrekten Pfad
 if os.path.exists(audio_datei_pfad):
 erkenne_basketball_dribbling(audio_datei_pfad)
