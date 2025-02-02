@@ -17,7 +17,7 @@ class Basketball_Dribbling:
     def __init__(self, app):
         self.app = app
 
-    def erkenne_basketball_dribbling(self, schwellenwert_amplitude=0.05, frequenzbereich=(50, 200), record_seconds = 10):
+    def erkenne_basketball_dribbling(self, schwellenwert_amplitude=0.05, frequenzbereich=(50, 200), record_seconds = 2):
         """
         Prüft, ob eine Audiodatei Basketball-Dribblings enthält.
 
@@ -27,65 +27,59 @@ class Basketball_Dribbling:
         :return: Gibt "Dribbling erkannt" aus, wenn ein Basketball-Dribbling erkannt wurde.
         """
         while self.app.running:
-            try:
-                """
-                # Audiodatei laden        
-                audio, sr = librosa.load(audio_datei, sr=None)
-                
-                rec = Recorder(rate=44100, record_seconds=record_seconds, chunksize=1024)
+            
+            recorder = Recorder(rate=44100, record_seconds=record_seconds, chunksize=1024)
+            audio = recorder.record_buffer()
+            sr = 44100  # Sample-Rate für das Mikrofon
+            recorder.close()
 
-                # Aufnahme vom Mikrofon starten
-                audio_buffer = rec.record_buffer()
+            # Falls `audio` nicht bereits `float32` ist, konvertieren
+            audio = audio.astype(np.float32) / np.iinfo(np.int16).max
 
-                # Verarbeite die Audiodaten, die vom Mikrofon aufgenommen wurden
-                sr = 44100  # Sample-Rate setzen (kann je nach Mikrofon angepasst werden)"""
+            print(f"Überprüfe das geladene Signal auf ungültige Werte...")
+            if np.any(np.isnan(audio)):
+                print("Das Audio-Signal enthält NaN-Werte!")
+            if np.any(np.isinf(audio)):
+                print("Das Audio-Signal enthält unendliche Werte!")
+            
+            # Bandpass-Filter anwenden
+            #audio = bandpass_filter(audio, lowcut=frequenzbereich[0], highcut=frequenzbereich[1], sr=sr)
 
-                recorder = Recorder(rate=44100, record_seconds=record_seconds, chunksize=1024)
-                audio = recorder.record_buffer()  # Audio aufnehmen
-                sr = 44100  # Sample-Rate für das Mikrofon
+            # Kurzzeit-Fourier-Transformation (STFT)
+            print("Berechne STFT...")
+            stft = np.abs(librosa.stft(audio))
+            
+            # Berechne durchschnittliche Amplitude
+            durchschnitt_amplitude = np.mean(stft)
+            print(f"Durchschnittliche Amplitude: {durchschnitt_amplitude}")
 
-                audio = audio.astype(np.float32) / np.iinfo(np.int16).max
+            # Berechne Frequenzspektrum
+            n_fft = 2048
+            frequenzen = librosa.fft_frequencies(sr=sr, n_fft=n_fft)
+            amplituden = np.mean(stft, axis=1)
 
-                gefiltertes_signal = bandpass_filter(audio, lowcut=frequenzbereich[0], highcut=frequenzbereich[1], sr=sr)
-                
-                
-                
-                #gefiltertes_signal = bandpass_filter(audio, lowcut=50, highcut=200, sr=sr)
+            # Dimensionen anpassen
+            if len(frequenzen) != len(amplituden):
+                amplituden = amplituden[:len(frequenzen)]
 
-                # Kurzzeit-Fourier-Transformation (STFT)
-                #print(np.abs(librosa.stft(audio)))
-                stft = np.abs(librosa.stft(audio))
+            # Filtere relevante Frequenzen
+            relevante_frequenzen = frequenzen[(frequenzen >= frequenzbereich[0]) & (frequenzen <= frequenzbereich[1])]
+            relevante_amplituden = amplituden[(frequenzen >= frequenzbereich[0]) & (frequenzen <= frequenzbereich[1])]
 
-                # Berechnung der mittleren Amplitude
-                durchschnitt_amplitude = np.mean(stft)
+            print(f"Summe relevanter Amplituden: {np.sum(relevante_amplituden)}")
 
-                # Berechnung des Frequenzspektrums
-                n_fft = 2048
-                frequenzen = librosa.fft_frequencies(sr=sr, n_fft=n_fft)
-                amplituden = np.mean(stft, axis=1)
+            # Erkenne Dribbling
+            print("Erkenne Dribbling...")
+            if durchschnitt_amplitude > schwellenwert_amplitude and np.sum(relevante_amplituden) > 0:
+                onsets = librosa.onset.onset_detect(y=audio, sr=sr, backtrack=True, pre_max=10, post_max=10, delta=0.2)
+                if len(onsets) > 0:
+                    print(f"Basketball-Dribbling erkannt! Anzahl der Dribblings: {len(onsets)}")
 
-                # Dimensionen überprüfen und anpassen
-                if len(frequenzen) != len(amplituden):
-                    amplituden = amplituden[:len(frequenzen)]
-
-                # Filtern der relevanten Frequenzen im spezifizierten Bereich
-                relevante_frequenzen = frequenzen[(frequenzen >= frequenzbereich[0]) & (frequenzen <= frequenzbereich[1])]
-                relevante_amplituden = amplituden[(frequenzen >= frequenzbereich[0]) & (frequenzen <= frequenzbereich[1])]
-
-                # Erkennung von Dribbling-Mustern basierend auf Lautstärke und Frequenzen
-                if durchschnitt_amplitude > schwellenwert_amplitude and np.sum(relevante_amplituden) > 0:
-                    # Onset-Erkennung für Impulsanalyse
-                    onsets = librosa.onset.onset_detect(y=audio, sr=sr, backtrack=True)
-                    if len(onsets) > 0:
-                        print(f"Basketball-Dribbling erkannt! Anzahl der Dribblings: {len(onsets)}")
-                        self.app.increase_dribblings(len(onsets))
-                    else:
-                        print("Kein Dribbling erkannt (keine Impulsstruktur).")
                 else:
-                    print("Kein Basketball-Dribbling erkannt.")
+                    print("Kein Dribbling erkannt (keine Impulsstruktur).")
+            else:
+                print("Kein Basketball-Dribbling erkannt.")
 
-            except Exception as e:
-                print(f"Fehler bei der Verarbeitung der Datei: {e}")
 
 class DribblingThread(threading.Thread):
     def __init__(self, dribbling_count):
