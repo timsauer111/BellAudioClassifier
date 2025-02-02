@@ -5,55 +5,45 @@ from scipy.signal import butter, lfilter
 from soundReader import Recorder
 import threading
 
-def bandpass_filter(signal, lowcut, highcut, sr, order=5):
-    nyquist = 0.5 * sr
-    low = lowcut / nyquist
-    high = highcut / nyquist
-    b, a = butter(order, [low, high], btype='band')
-    return lfilter(b, a, signal)
-
 
 class Basketball_Dribbling:
-    def __init__(self, app):
-        self.app = app
-
-    def erkenne_basketball_dribbling(self, schwellenwert_amplitude=0.05, frequenzbereich=(50, 200), record_seconds = 2):
+    
+    def __init__(self, app, schwellenwert_amplitude=0.05, frequenzbereich=(50, 200)):
         """
-        Prüft, ob eine Audiodatei Basketball-Dribblings enthält.
-
-        :param audio_datei: Pfad zur Audiodatei (z. B. .wav, .mp3).
         :param schwellenwert_amplitude: Mindestlautstärke für Dribbling-Sounds.
         :param frequenzbereich: Typischer Frequenzbereich eines Basketball-Dribblings (Hz).
-        :return: Gibt "Dribbling erkannt" aus, wenn ein Basketball-Dribbling erkannt wurde.
         """
-        while self.app.running:
+        
+        self.app = app
+        self.schwellenwert_amplitude = schwellenwert_amplitude
+        self.frequenzbereich = frequenzbereich
+
+    def detect_dribbling(self, audio_data, sr=44100):
+        """
+        Prüft, ob eine Audiodatei Basketball-Dribblings enthält.        
+        :return: Gibt anzahl der erkannten dribblings zurück
+        """     
             
-            recorder = Recorder(rate=44100, record_seconds=record_seconds, chunksize=1024)
-            audio = recorder.record_buffer()
-            sr = 44100  # Sample-Rate für das Mikrofon
-            recorder.close()
-
+        try:
             # Falls `audio` nicht bereits `float32` ist, konvertieren
-            audio = audio.astype(np.float32) / np.iinfo(np.int16).max
-
-            print(f"Überprüfe das geladene Signal auf ungültige Werte...")
-            if np.any(np.isnan(audio)):
-                print("Das Audio-Signal enthält NaN-Werte!")
-            if np.any(np.isinf(audio)):
-                print("Das Audio-Signal enthält unendliche Werte!")
+            audio = audio_data.astype(np.float32) / np.iinfo(np.int16).max
             
             # Bandpass-Filter anwenden
-            #audio = bandpass_filter(audio, lowcut=frequenzbereich[0], highcut=frequenzbereich[1], sr=sr)
+            audio = self._apply_bandpass_filter(audio, sr)
 
-            # Kurzzeit-Fourier-Transformation (STFT)
-            print("Berechne STFT...")
+            # Kurzzeit-Fourier-Transformation (STFT)            
             stft = np.abs(librosa.stft(audio))
             
             # Berechne durchschnittliche Amplitude
             durchschnitt_amplitude = np.mean(stft)
-            print(f"Durchschnittliche Amplitude: {durchschnitt_amplitude}")
-
-            # Berechne Frequenzspektrum
+            """
+            if durchschnitt_amplitude <= self.schwellenwert_amplitude:
+                return 0
+            
+            # Onset Detection
+            onsets = librosa.onset.onset_detect(y=audio, sr=sr, backtrack=True, pre_max=10, post_max=10, delta=0.2)
+            return len(onsets)
+            """
             n_fft = 2048
             frequenzen = librosa.fft_frequencies(sr=sr, n_fft=n_fft)
             amplituden = np.mean(stft, axis=1)
@@ -63,30 +53,62 @@ class Basketball_Dribbling:
                 amplituden = amplituden[:len(frequenzen)]
 
             # Filtere relevante Frequenzen
-            relevante_frequenzen = frequenzen[(frequenzen >= frequenzbereich[0]) & (frequenzen <= frequenzbereich[1])]
-            relevante_amplituden = amplituden[(frequenzen >= frequenzbereich[0]) & (frequenzen <= frequenzbereich[1])]
+            relevante_frequenzen = frequenzen[(frequenzen >= self.frequenzbereich[0]) & (frequenzen <= self.frequenzbereich[1])]
+            relevante_amplituden = amplituden[(frequenzen >= self.frequenzbereich[0]) & (frequenzen <= self.frequenzbereich[1])]
+            """
 
-            print(f"Summe relevanter Amplituden: {np.sum(relevante_amplituden)}")
-
+            """
             # Erkenne Dribbling
-            print("Erkenne Dribbling...")
-            if durchschnitt_amplitude > schwellenwert_amplitude and np.sum(relevante_amplituden) > 0:
+            if durchschnitt_amplitude > self.schwellenwert_amplitude and np.sum(relevante_amplituden) > 0:
+            
                 onsets = librosa.onset.onset_detect(y=audio, sr=sr, backtrack=True, pre_max=10, post_max=10, delta=0.2)
-                if len(onsets) > 0:
-                    print(f"Basketball-Dribbling erkannt! Anzahl der Dribblings: {len(onsets)}")
-
-                else:
-                    print("Kein Dribbling erkannt (keine Impulsstruktur).")
+            
+                return len(onsets)
             else:
-                print("Kein Basketball-Dribbling erkannt.")
+                return 0
+            
+        
+        except Exception as e:
+            print(f"Fehler bei der Dribbling-Erkennung: {e}")
+            return 0
+        
+    def _apply_bandpass_filter(self, signal, sr, order=3):
+        """Private Hilfsmethode für den Bandpass-Filter"""
+        nyquist = 0.5 * sr
+        low = self.frequenzbereich[0] / nyquist
+        high = self.frequenzbereich[1] / nyquist
+        b, a = butter(order, [low, high], btype='band')
+        return lfilter(b, a, signal)
+
+
+    def run_dribbling_detection(self):
+        """
+        Kontinuierliche Aufnahme & Auswertung.
+        """
+        while self.app.running:
+            try:
+                recorder = Recorder(rate=44100, record_seconds=2, chunksize=1024)
+                audio = recorder.record_buffer()
+                recorder.close()
+
+                dribble_count = self.detect_dribbling(audio)
+
+                if dribble_count > 0:
+                    self.app.increase_dribblings(dribble_count)
+                    print(f"Dribblings erkannt: {dribble_count}")
+            except Exception as e:
+                print(f"Fehler in der Hauptschleife: {e}")
+
+
 
 
 class DribblingThread(threading.Thread):
     def __init__(self, dribbling_count):
         threading.Thread.__init__(self)
         self.dribbling_count = dribbling_count
+
     def run(self):
-        self.dribbling_count.erkenne_basketball_dribbling(record_seconds=2)
+        self.dribbling_count.run_dribbling_detection()
 
 def start_dribbling_thread(app):
     d = Basketball_Dribbling(app)

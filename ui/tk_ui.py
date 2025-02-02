@@ -66,7 +66,7 @@ class BellAudioClassifierUI:
         """
         self.made_shots += 1
 
-    def increase_dribblings(self, dribblings):
+    def increase_dribblings(self, dribblings = 1):
         """
         Increments the dribblings counter by a specified amount.
 
