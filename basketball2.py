@@ -14,7 +14,7 @@ import queue
 class Basketball_Dribbling:
 
     
-    def __init__(self, app, schwellenwert_amplitude=0.4, frequenzbereich=(80, 150)):
+    def __init__(self, app, schwellenwert_amplitude=0.6, frequenzbereich=(80, 150)):
         """
         :param schwellenwert_amplitude: Mindestlautstärke für Dribbling-Sounds.
         :param frequenzbereich: Typischer Frequenzbereich eines Basketball-Dribblings (Hz).
