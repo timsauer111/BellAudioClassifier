@@ -10,7 +10,7 @@ def bandpass_filter(signal, lowcut, highcut, sr, order=5):
     b, a = butter(order, [low, high], btype='band')
     return lfilter(b, a, signal)
 
-def erkenne_basketball_dribbling(schwellenwert_amplitude=0.2, frequenzbereich=(50, 200), record_seconds=10):
+def erkenne_basketball_dribbling(schwellenwert_amplitude=0.2, frequenzbereich=(50, 200), record_seconds=20):
     """
     Prüft, ob eine Audiodatei Basketball-Dribblings enthält.
 
@@ -64,7 +64,7 @@ def erkenne_basketball_dribbling(schwellenwert_amplitude=0.2, frequenzbereich=(5
     # Erkenne Dribbling
     print("Erkenne Dribbling...")
     if durchschnitt_amplitude > schwellenwert_amplitude and np.sum(relevante_amplituden) > 0:
-        onsets = librosa.onset.onset_detect(y=audio, sr=sr, backtrack=True, pre_max=10, post_max=10, delta=0.2)
+        onsets = librosa.onset.onset_detect(y=audio, sr=sr, backtrack=True, pre_max=10, post_max=10, delta=0.3)
         if len(onsets) > 0:
             print(f"Basketball-Dribbling erkannt! Anzahl der Dribblings: {len(onsets)}")
         else:
