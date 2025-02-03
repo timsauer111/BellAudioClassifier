@@ -14,7 +14,7 @@ import queue
 class Basketball_Dribbling:
 
     
-    def __init__(self, app, schwellenwert_amplitude=0.6, frequenzbereich=(80, 150)):
+    def __init__(self, app, schwellenwert_amplitude=0.2, frequenzbereich=(50, 200)):
         """
         :param schwellenwert_amplitude: Mindestlautstärke für Dribbling-Sounds.
         :param frequenzbereich: Typischer Frequenzbereich eines Basketball-Dribblings (Hz).
@@ -37,10 +37,10 @@ class Basketball_Dribbling:
             # Falls `audio` nicht bereits `float32` ist, konvertieren
             audio = audio_data.astype(np.float32) / np.iinfo(np.int16).max
             
-            audio = nr.reduce_noise(y=audio, sr=sr, stationary=True, prop_decrease=0.5)
+            #audio = nr.reduce_noise(y=audio, sr=sr, stationary=True, prop_decrease=0.5)
 
             # Bandpass-Filter anwenden
-            #audio = self._apply_bandpass_filter(audio, sr)
+            audio = self._apply_bandpass_filter(audio, sr)
 
             # Kurzzeit-Fourier-Transformation (STFT)            
             stft = np.abs(librosa.stft(audio))
@@ -65,7 +65,7 @@ class Basketball_Dribbling:
             if durchschnitt_amplitude > self.schwellenwert_amplitude and np.sum(relevante_amplituden) > 0:
             
                 onsets = librosa.onset.onset_detect(y=audio, sr=sr, backtrack=True, pre_max=10, post_max=10, 
-                    delta=0.3, units='frames', wait=5)    
+                    delta=0.1, units='frames', wait=5)    
                 
                 t1=time.time()
                 total = t1 -t0
@@ -81,12 +81,12 @@ class Basketball_Dribbling:
             return 0
         
         
-    def _apply_bandpass_filter(self, signal, sr, order=3):
+    def _apply_bandpass_filter(self, signal, sr, order=2):
         """Private Hilfsmethode für den Bandpass-Filter"""
         
         nyquist = 0.5 * sr
-        low = self.frequenzbereich[0] / nyquist
-        high = self.frequenzbereich[1] / nyquist
+        low = 50 / nyquist
+        high = 200 / nyquist
         b, a = butter(order, [low, high], btype='band')
         
         return lfilter(b, a, signal)
