@@ -32,8 +32,6 @@ class Basketball_Dribbling:
         :return: Gibt anzahl der erkannten dribblings zurück
         """                 
         try:
-            t0 = time.time()
-            
             # Falls `audio` nicht bereits `float32` ist, konvertieren
             audio = audio_data.astype(np.float32) / np.iinfo(np.int16).max
             
@@ -67,10 +65,6 @@ class Basketball_Dribbling:
                 onsets = librosa.onset.onset_detect(y=audio, sr=sr, backtrack=True, pre_max=10, post_max=10, 
                     delta=0.1, units='frames', wait=5)    
                 
-                t1=time.time()
-                total = t1 -t0
-                print("berechnung", total)
-
                 return len(onsets)
             
             else:
