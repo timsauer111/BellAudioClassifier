@@ -440,7 +440,7 @@ class ListenerThread(threading.Thread):
         while self.app.running:
             self.app.refresh_made_shots()
             self.app.refresh_dribblings()
-            time.sleep(1)
+            time.sleep(1) 
 
 # Set customtkinter appearance mode and color theme
 ctk.set_appearance_mode("Dark")  # Options: "System", "Dark", "Light"

@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from scipy.signal import butter, filtfilt
 
 # Step 1: Load the audio file
-audio_path = "/home/user/BellAudioClassifier/testData/speech_16000_hz_mono.wav"  # Replace with your audio file path
+audio_path = "/home/user/BellAudioClassifier/testData/5_regelmaesig.wav"  # Replace with your audio file path
 y, sr = librosa.load(audio_path, sr=None)  # y: audio waveform, sr: sample rate
 
 # Step 2: Visualize the waveform
