@@ -5,7 +5,7 @@ import time
 import threading
 from datetime import datetime, timedelta
 
-class ModeHandler:
+class ModeHandler:      
     def __init__(self):
         self.current_mode = "count"
         self.challenge_difficulty = "easy"
@@ -90,7 +90,15 @@ class BellAudioClassifierUI:
         ctk.CTkButton(self.start_frame, 
                      text="Close", 
                      command=self.root.quit).pack(side="bottom", pady=10)
-        
+
+    def update_mode_options(self, selected_mode):
+        if selected_mode == "Count Mode":
+            self.count_mode_options()
+            self.mode.current_mode = "count"
+        else:
+            self.challenge_mode_options()
+            self.mode.current_mode = "challenge"
+
     def count_mode_options(self):
         # Clear previous options
         for widget in self.mode_options_frame.winfo_children():
@@ -98,11 +106,13 @@ class BellAudioClassifierUI:
 
         ctk.CTkLabel(self.mode_options_frame, text="Count Settings").pack()
         
+        """
         # Timer Checkbox
         self.timer_var = ctk.BooleanVar()
         ctk.CTkCheckBox(self.mode_options_frame, 
                        text="Enable Timer", 
                        variable=self.timer_var).pack(pady=5)
+        """
         
         # Target Selection
         self.target_var = ctk.StringVar(value="both")
@@ -140,19 +150,30 @@ class BellAudioClassifierUI:
             ctk.CTkRadioButton(self.mode_options_frame,
                               text=text,
                               variable=self.diff_var,
-                              value=value).pack(anchor="w")
+                              value=value).pack(anchor="w", pady=2)
         
         # Custom Settings
         self.custom_frame = ctk.CTkFrame(self.mode_options_frame)
         self.custom_frame.pack(pady=10, fill="x")
         
-        ctk.CTkLabel(self.custom_frame, text="Time (sec):").grid(row=0, column=0)
+        ctk.CTkLabel(self.custom_frame, text="Time (sec):").grid(row=0, column=0, padx=5)
         self.time_entry = ctk.CTkEntry(self.custom_frame, width=80)
         self.time_entry.grid(row=0, column=1, padx=5)
         
-        ctk.CTkLabel(self.custom_frame, text="Goal:").grid(row=0, column=2)
+        ctk.CTkLabel(self.custom_frame, text="Goal:").grid(row=0, column=2, padx=5)
         self.goal_entry = ctk.CTkEntry(self.custom_frame, width=80)
-        self.goal_entry.grid(row=0, column=3)
+        self.goal_entry.grid(row=0, column=3, padx=5)
+
+        ctk.CTkLabel(self.mode_options_frame, text="Select Target for Challenge", font=("Helvetica", 18)).pack(pady=5)
+        self.challenge_target_var = ctk.StringVar(value="dribbles")  # Default selection
+        ctk.CTkRadioButton(self.mode_options_frame,
+                        text="Shots Only",
+                        variable=self.challenge_target_var,
+                        value="shots").pack(anchor="w", pady=2)
+        ctk.CTkRadioButton(self.mode_options_frame,
+                        text="Dribbles Only",
+                        variable=self.challenge_target_var,
+                        value="dribbles").pack(anchor="w", pady=2)
         
         self.diff_var.trace_add("write", self.validate_challenge_settings)
 
@@ -173,27 +194,24 @@ class BellAudioClassifierUI:
             self.start_btn.configure(state="normal")
 
 
-    def update_mode_options(self, selected_mode):
-        if selected_mode == "Count Mode":
-            self.count_mode_options()
-            self.mode.current_mode = "count"
-        else:
-            self.challenge_mode_options()
-            self.mode.current_mode = "challenge"
-
     def start_training(self):
+        self.running = True
+        if hasattr(self, 'start_btn') and self.start_btn.winfo_exists():
+            self.start_btn.pack_forget() 
         self.setup_training_parameters()
         self.show_run_page()
 
     def setup_training_parameters(self):
         if self.mode.current_mode == "challenge":
             diff = self.diff_var.get()
+
+            challange_target = self.challenge_target_var.get()
             if diff == "easy":
-                self.mode.time_limit = 30 if self.target_var.get() == "dribbles" else 120
-                self.mode.target = 30 if self.target_var.get() == "dribbles" else 5
+                self.mode.time_limit = 30 if challange_target == "dribbles" else 120
+                self.mode.target = 30 if challange_target == "dribbles" else 5
             elif diff == "hard":
-                self.mode.time_limit = 60 if self.target_var.get() == "dribbles" else 120
-                self.mode.target = 120 if self.target_var.get() == "dribbles" else 10
+                self.mode.time_limit = 60 if challange_target == "dribbles" else 120
+                self.mode.target = 120 if challange_target == "dribbles" else 10
             else:
                 self.mode.time_limit = int(self.time_entry.get())
                 self.mode.target = int(self.goal_entry.get())
@@ -220,6 +238,15 @@ class BellAudioClassifierUI:
         
         # Control Buttons
         self.build_control_buttons()
+
+    def build_control_buttons(self):
+        btn_frame = ctk.CTkFrame(self.run_frame)
+        btn_frame.pack(side="bottom", pady=20)
+        
+        # Back Button
+        ctk.CTkButton(btn_frame,
+                     text="Back to Main",
+                     command=self.stop).pack(side="right", padx=10)
 
     def build_count_mode_ui(self):
         self.root.after(500, self.start_classifier)
@@ -254,48 +281,42 @@ class BellAudioClassifierUI:
             self.timer_var.set(str(elapsed).split(".")[0])  # Format as HH:MM:SS
             self.root.after(1000, self.update_timer)  # Update every second
 
-
     def build_challenge_mode_ui(self):
+
         challenge_frame = ctk.CTkFrame(self.run_frame)
         challenge_frame.pack(pady=20)
         
         # Goal Display
-        ctk.CTkLabel(challenge_frame, text="Goal", font=("Helvetica", 18)).grid(row=0, column=0)
+        ctk.CTkLabel(challenge_frame, text="Goal", font=("Helvetica", 18)).grid(row=0, column=0, padx=20)
         self.goal_label = ctk.CTkLabel(challenge_frame, 
                                       text=str(self.mode.target),
                                       font=("Helvetica", 24))
         self.goal_label.grid(row=1, column=0, padx=20)
         
         # Timer Display
-        ctk.CTkLabel(challenge_frame, text="Time Left", font=("Helvetica", 18)).grid(row=0, column=1)
+        ctk.CTkLabel(challenge_frame, text="Time Left", font=("Helvetica", 18)).grid(row=0, column=1, padx=20)
         self.time_left_label = ctk.CTkLabel(challenge_frame, 
                                            text=str(timedelta(seconds=self.mode.time_limit)),
                                            font=("Helvetica", 24))
         self.time_left_label.grid(row=1, column=1, padx=20)
+
+        if self.challenge_target_var.get() == "shots":
+            ctk.CTkLabel(challenge_frame, text="Shots", font=("Helvetica", 18)).grid(row=2, column=0, padx=20, pady=10)
+            self.made_shots_label = ctk.CTkLabel(challenge_frame, textvariable = self.var, font=("Helvetica", 24))
+            self.made_shots_label.grid(row=3, column=0, padx=20)
+        
+        else: #dribbles
+            ctk.CTkLabel(challenge_frame, text="Dribbles", font=("Helvetica", 18)).grid(row=2, column=1, padx=20, pady=10)
+            self.dribbles_label = ctk.CTkLabel(challenge_frame, textvariable=self.var_dribblings, font=("Helvetica", 24))
+            self.dribbles_label.grid(row=3, column=1, padx=20)
         
         # Start/Restart Button
         self.start_challenge_btn = ctk.CTkButton(challenge_frame, 
                                                 text="Start Countdown",
                                                 command=self.start_challenge)
-        self.start_challenge_btn.grid(row=2, columnspan=2, pady=10)
+        self.start_challenge_btn.grid(row=4, columnspan=2, pady=10)
 
-    def build_control_buttons(self):
-        btn_frame = ctk.CTkFrame(self.run_frame)
-        btn_frame.pack(side="bottom", pady=20)
-        
-        # Pause/Continue Button
-        self.pause_btn = ctk.CTkButton(btn_frame,
-                                      text="Pause",
-                                      command=self.toggle_pause)
-        self.pause_btn.pack(side="left", padx=10)
-        
-        # Back Button
-        ctk.CTkButton(btn_frame,
-                     text="Back to Main",
-                     command=self.stop).pack(side="right", padx=10)
 
-    # Add remaining methods for functionality (timer, challenge handling, etc.)
-    # [Diese müssten entsprechend der Logik implementiert werden]
     def start_challenge(self):
         self.mode.challenge_active = True
         self.start_challenge_btn.configure(text="3...", state="disabled")
@@ -304,8 +325,10 @@ class BellAudioClassifierUI:
         self.root.after(3000, self.begin_challenge)
 
     def begin_challenge(self):
+        self.running = True
         self.mode.start_time = datetime.now()
         self.start_challenge_btn.configure(text="Restart", state="normal")
+        self.start_classifier()
         self.update_challenge_timer()
 
     def update_challenge_timer(self):
@@ -326,7 +349,7 @@ class BellAudioClassifierUI:
 
         else:
             self.time_left_label.configure(text_color="red")
-
+    """
     def refresh_counts(self):
         if self.target_var.get() in ["shots", "both"]:
             self.shots_label.configure(text=str(self.made_shots))
@@ -345,15 +368,35 @@ class BellAudioClassifierUI:
             else:
                 self.root.after(1000, self.check_challenge_status)
 
-
-    def toggle_pause(self):
-        print("hi")
+    """
         
     def start_classifier(self):
-        start_classifier_thread(self)
-        start_dribbling_thread(self)
+        # Determine which mode is selected: "shots", "dribbles", or "both"
+        # (Assuming that self.target_var is a StringVar set in count_mode_options)
+        if self.mode.current_mode == "count":
+            target = self.target_var.get() if hasattr(self, "target_var") else "both"
+        else:
+            target = self.challenge_target_var.get()
+        
+        if target == "shots":
+            print("Starting bell classifier thread only...")
+            start_classifier_thread(self)
+        elif target == "dribbles":
+            print("Starting dribbling classifier thread only...")
+            start_dribbling_thread(self)
+        elif target == "both":
+            print("Starting both classifier threads...")
+            start_classifier_thread(self)
+            start_dribbling_thread(self)
+        else:
+            print("No valid target selected, defaulting to both threads.")
+            start_classifier_thread(self)
+            start_dribbling_thread(self)
+        
+        # Start the listener thread regardless
         listener = ListenerThread(self)
         listener.start()
+
 
     def increase_made_shots(self):
         """
@@ -385,7 +428,9 @@ class BellAudioClassifierUI:
 
     def stop(self):
         self.running = False
-
+        for widget in self.main_frame.winfo_children():
+            widget.destroy()  
+        """
         # Check if widgets exist before calling pack_forget
         if hasattr(self, 'made_shots_label') and self.made_shots_label:
             self.made_shots_label.pack_forget()
@@ -399,16 +444,18 @@ class BellAudioClassifierUI:
             self.stop_button.pack_forget()
         if hasattr(self, 'quit_button') and self.quit_button:
             self.quit_button.pack_forget()
-
-        # Recreate start_btn if it doesn't exist
-        if not hasattr(self, 'start_btn') or not self.start_btn.winfo_exists():
-            self.start_btn = ctk.CTkButton(self.main_frame, 
-                                        text="Start Training", 
-                                        state="disabled",
-                                        command=self.start_training)
-        self.start_btn.pack(expand=True, padx=20, pady=20)
-
-        self.start_btn.pack(expand=True, padx=20, pady=20)
+        """
+        
+        if hasattr(self, 'start_btn') and self.start_btn.winfo_exists():
+            self.start_btn.destroy()
+        
+        self.start_btn = ctk.CTkButton(self.main_frame, 
+                                    text="Start Training", 
+                                    state="disabled",
+                                    command=self.start_training)
+        self.start_btn.pack(side = "bottom", expand=True, padx=20, pady=20)
+        
+        
         self.made_shots = 0
         self.var.set(str(self.made_shots))
         self.dribblings = 0
