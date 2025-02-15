@@ -21,6 +21,11 @@ import threading
 
 
 class Classifier():
+    """
+    This class wraps MediaPipe's AudioClassifier to detect specific bell sounds.
+    
+    :param app: The main application object controlling the overall flow.
+    """
     def __init__(self, app):
         self.AudioClassifier = mp.tasks.audio.AudioClassifier
         self.AudioClassifierOptions = mp.tasks.audio.AudioClassifierOptions
@@ -46,10 +51,11 @@ class Classifier():
 
     def classify_input_audio(self, classifier):
         """
-        Records short audio samples, processes them via AudioClassifier, 
-        and returns a list of category names.
+        Records a short audio sample using the Recorder, classifies it with the given
+        AudioClassifier, and returns a list of recognized category names.
 
-        :return: A list of string category names recognized for the recorded audio.
+        :param classifier: An instantiated AudioClassifier for processing audio data.
+        :return: A list of recognized category names (strings).
         """
         # Start recording using specified sample rate and duration.
         rec = Recorder(rate=44100, record_seconds=2, chunksize=1024)
@@ -91,11 +97,18 @@ class Classifier():
         return [cat_name for _, cat_name in result_categories]
     
     def start_classifier(self):
+        """
+        Creates the AudioClassifier instance and calls the audio classification loop.
+        """
         self.classifier_instance = self.AudioClassifier.create_from_options(self.options)
         self.classify_audio()
 
 
     def classify_audio(self):
+        """
+        Continuously checks for recognized bell sounds while the app is running.
+        If any recognized category belongs to classfication_set, increments the counter.
+        """
         while self.app.running:
             results = self.classify_input_audio(self.classifier_instance)
             if self.classfication_set.intersection(results):
@@ -111,17 +124,26 @@ class Classifier():
         
 
 class ClassifierThread(threading.Thread):
+    """
+    A threading class that starts the audio classification in a background thread.
+
+    :param classifier: An instance of the Classifier class to run in this thread.
+    """
     def __init__(self, classifier):
         threading.Thread.__init__(self)
         self.classifier = classifier
 
     def run(self):
-        print("Running classifier")
         self.classifier.start_classifier()
 
 
 
 def start_classifier_thread(app):
+    """
+    Convenience function to create and start the Classifier in a separate thread.
+
+    :param app: The main application instance.
+    """
     c = Classifier(app)
     classifier_thread = ClassifierThread(c)
     classifier_thread.start()

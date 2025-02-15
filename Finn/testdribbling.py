@@ -11,64 +11,76 @@ def bandpass_filter(signal, lowcut, highcut, sr, order=5):
     b, a = butter(order, [low, high], btype='band')
     return lfilter(b, a, signal)
 
-def erkenne_dribbling(audio_datei, schwellenwert_amplitude=0.10, frequenzbereich=(50, 200)):
-    print("Starte Dribbling-Erkennung...")  # Debug-Startpunkt
+def erkenne_dribbling(audio_datei, schwellenwert_amplitude=0.26, frequenzbereich=(50, 200)):
+    """
+    Prüft, ob eine Audiodatei Basketball-Dribblings enthält.
+    """
+    print("Starte Dribbling-Erkennung...")
+
     try:
-        # Audiodatei prüfen
-        print(f"Prüfe, ob die Datei existiert: {audio_datei}")
+        # Audiodatei laden
         if not os.path.exists(audio_datei):
             print(f"Datei nicht gefunden: {audio_datei}")
             return
+        print(f"Lade Audiodatei: {audio_datei}")
+        audio, sr = librosa.load(audio_datei, sr=None)
 
-        print("Lade Audiodatei...")
-        audio, sr = librosa.load(audio_datei, sr=None, duration=5)
+        # Überprüfen, ob das Audio-Signal gültig ist
+        print(f"Überprüfe das geladene Signal auf ungültige Werte...")
+        if np.any(np.isnan(audio)):
+            print("Das Audio-Signal enthält NaN-Werte!")
+        if np.any(np.isinf(audio)):
+            print("Das Audio-Signal enthält unendliche Werte!")
+
+        # Länge und Samplingrate
         print(f"Audiodatei geladen: Länge = {len(audio)}, Samplingrate = {sr}")
 
-        # Bereinigen
-        if not np.all(np.isfinite(audio)):
-            print("Ungültige Werte gefunden. Bereinige...")
-            audio = np.nan_to_num(audio, nan=0.0, posinf=0.0, neginf=0.0)
+        # Visualisierung (nur die ersten 5 Sekunden)
+        
 
-        print("Starte Visualisierung...")
+        # Bandpass-Filter anwenden
+        #print("Wende Bandpass-Filter an...")        
+        #audio = bandpass_filter(audio, lowcut = 50, highcut=200, sr=sr)
+        
+        """
         plt.figure(figsize=(10, 4))
         librosa.display.waveshow(audio, sr=sr)
         plt.title("Audiodatei - Zeitverlauf")
         plt.xlabel("Zeit (s)")
         plt.ylabel("Amplitude")
+        plt.show()
+        """
 
-
-        plt.savefig("plot.png")
-        print("Plot wurde als plot.png gespeichert.")
-
-
-        print("Wende Bandpass-Filter an...")
-        audio = bandpass_filter(audio, lowcut=frequenzbereich[0], highcut=frequenzbereich[1], sr=sr)
-
+        # Berechne STFT
         print("Berechne STFT...")
         stft = np.abs(librosa.stft(audio))
-
-        print("Berechne durchschnittliche Amplitude...")
+        
+        
+        # Berechne durchschnittliche Amplitude
         durchschnitt_amplitude = np.mean(stft)
         print(f"Durchschnittliche Amplitude: {durchschnitt_amplitude}")
 
-        print("Berechne Frequenzspektrum...")
+        # Berechne Frequenzspektrum
         n_fft = 2048
         frequenzen = librosa.fft_frequencies(sr=sr, n_fft=n_fft)
         amplituden = np.mean(stft, axis=1)
 
-        print("Filtere relevante Frequenzen...")
+        # Dimensionen anpassen
         if len(frequenzen) != len(amplituden):
             amplituden = amplituden[:len(frequenzen)]
+
+        # Filtere relevante Frequenzen
         relevante_frequenzen = frequenzen[(frequenzen >= frequenzbereich[0]) & (frequenzen <= frequenzbereich[1])]
         relevante_amplituden = amplituden[(frequenzen >= frequenzbereich[0]) & (frequenzen <= frequenzbereich[1])]
 
         print(f"Summe relevanter Amplituden: {np.sum(relevante_amplituden)}")
 
-        print("Erkenne Dribblings...")
+        # Erkenne Dribbling
+        print("Erkenne Dribbling...")
         if durchschnitt_amplitude > schwellenwert_amplitude and np.sum(relevante_amplituden) > 0:
-            onsets = librosa.onset.onset_detect(y=audio, sr=sr, backtrack=True, pre_max=10, post_max=10, delta=0.1)
-            print(f"Onsets: {onsets}")
+            onsets = librosa.onset.onset_detect(y=audio, sr=sr, backtrack=True, pre_max=10, post_max=10, delta=0.2)
             if len(onsets) > 0:
+                #onset_zeiten = librosa.frames_to_time(onsets, sr=sr)
                 print(f"Basketball-Dribbling erkannt! Anzahl der Dribblings: {len(onsets)}")
             else:
                 print("Kein Dribbling erkannt (keine Impulsstruktur).")
@@ -78,11 +90,6 @@ def erkenne_dribbling(audio_datei, schwellenwert_amplitude=0.10, frequenzbereich
     except Exception as e:
         print(f"Fehler bei der Verarbeitung der Datei: {e}")
 
-
 # Beispielaufruf
-audio_datei_pfad = "Finn/dribbling.wav"
+audio_datei_pfad =  os.path.join(os.getcwd(), "Aufzeichnung.wav")  # Pfad zur Audiodatei
 erkenne_dribbling(audio_datei_pfad)
-
-
-
-
