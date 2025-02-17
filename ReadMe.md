@@ -1,7 +1,7 @@
 # BASKETBALL AUDIO CLASSIFIER
 #### Author1: Finn Hennig / 2181633
 #### Author2: Tim Sauer / 2171049
-#### Video: VC
+#### Video: https://youtu.be/vhjmgrkiWD0
 #### GitHub: https://github.com/timsauer111/BellAudioClassifier
 
 ## Description
