@@ -30,7 +30,7 @@ def erkenne_basketball_dribbling(schwellenwert_amplitude=0.05, frequenzbereich=(
             audio = audio.astype(np.float32) / np.iinfo(np.int16).max
 
         # Bandpass-Filter anwenden
-        audio = bandpass_filter(audio, lowcut=frequenzbereich[0], highcut=frequenzbereich[1], sr=sr)
+        #audio = bandpass_filter(audio, lowcut=frequenzbereich[0], highcut=frequenzbereich[1], sr=sr)
 
         # Kurzzeit-Fourier-Transformation (STFT)
         stft = np.abs(librosa.stft(audio))

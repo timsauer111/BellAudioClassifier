@@ -14,7 +14,7 @@ import queue
 class Basketball_Dribbling:
 
     
-    def __init__(self, app, schwellenwert_amplitude=0.2, frequenzbereich=(50, 200)):
+    def __init__(self, app, schwellenwert_amplitude=0.2, frequenzbereich=(50, 150)):
         """
         :param schwellenwert_amplitude: Mindestlautstärke für Dribbling-Sounds.
         :param frequenzbereich: Typischer Frequenzbereich eines Basketball-Dribblings (Hz).
@@ -33,8 +33,10 @@ class Basketball_Dribbling:
         """                 
         try:
             # Falls `audio` nicht bereits `float32` ist, konvertieren
-            audio = audio_data.astype(np.float32) / np.iinfo(np.int16).max
-            
+            if audio_data.dtype != np.float32:
+                audio = audio_data.astype(np.float32) / np.iinfo(np.int16).max
+            else:
+                audio = audio_data
             #audio = nr.reduce_noise(y=audio, sr=sr, stationary=True, prop_decrease=0.5)
 
             # Bandpass-Filter anwenden
@@ -62,8 +64,8 @@ class Basketball_Dribbling:
             # Erkenne Dribbling
             if durchschnitt_amplitude > self.schwellenwert_amplitude and np.sum(relevante_amplituden) > 0:
             
-                onsets = librosa.onset.onset_detect(y=audio, sr=sr, backtrack=True, pre_max=10, post_max=10, 
-                    delta=0.1, units='frames', wait=5)    
+                onsets = librosa.onset.onset_detect(y=audio, sr=sr, backtrack=True, pre_max=5, post_max=5, 
+                    delta=0.2)# units='frames')    
                 
                 return len(onsets)
             
@@ -75,12 +77,12 @@ class Basketball_Dribbling:
             return 0
         
         
-    def _apply_bandpass_filter(self, signal, sr, order=2):
+    def _apply_bandpass_filter(self, signal, sr, order=3):
         """Private Hilfsmethode für den Bandpass-Filter"""
         
         nyquist = 0.5 * sr
-        low = 50 / nyquist
-        high = 200 / nyquist
+        low = self.frequenzbereich[0] / nyquist
+        high = self.frequenzbereich[1] / nyquist
         b, a = butter(order, [low, high], btype='band')
         
         return lfilter(b, a, signal)
@@ -89,7 +91,7 @@ class Basketball_Dribbling:
     def continuous_recording(self):
         """Nimmt permanent auf und speichert Audio in einer Queue"""
         
-        recorder = Recorder(rate=44100, record_seconds=2, chunksize=1024)  # Kürzere Aufnahmen
+        recorder = Recorder(rate=44100, record_seconds=3, chunksize=1024)  # Kürzere Aufnahmen
 
         while self.app.running:
             audio = recorder.record_buffer()
