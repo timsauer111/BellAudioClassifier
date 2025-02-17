@@ -1,6 +1,7 @@
 import numpy as np
 import pyaudio
 import scipy.io.wavfile as wav
+import time
 
 class Recorder:
     """
@@ -38,11 +39,18 @@ class Recorder:
         print(f'Recording for {self.record_seconds} seconds...')
         frames = []
         for _ in range(0, int(self.rate / self.chunksize * self.record_seconds)):
-            data = self.stream.read(self.chunksize)
-            frames.append(np.frombuffer(data, dtype=np.int16))
-        numpydata = np.hstack(frames)  # Combine buffers into one NumPy array
-        return numpydata
-
+            try:
+                data = self.stream.read(self.chunksize)
+                frames.append(np.frombuffer(data, dtype=np.int16))
+            except OSError as e:
+                time.sleep(self.record_seconds)
+                break
+        try:
+            numpydata = np.hstack(frames)  # Combine buffers into one NumPy array
+            return numpydata
+        except ValueError as e:
+            return np.array([])
+        
     def safe_wav(self, filename):
         """
         Records audio data and saves it as a WAV file.
@@ -58,8 +66,11 @@ class Recorder:
         """
         Stops the recording stream and releases all associated resources.
         """
-        self.stream.stop_stream()
-        self.stream.close()
-        self.p.terminate()
+        try:
+            self.stream.stop_stream()
+            self.stream.close()
+            self.p.terminate()
+        except OSError as e:
+            pass
         print("Stopped Recording.")
 

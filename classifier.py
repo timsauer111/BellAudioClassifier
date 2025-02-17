@@ -60,12 +60,16 @@ class Classifier():
         # Start recording using specified sample rate and duration.
         rec = Recorder(rate=44100, record_seconds=2, chunksize=1024)
         # Fetch audio data into a numpy buffer.
-        buffer = rec.record_buffer()
-        audio_data = mp.tasks.components.containers.AudioData.create_from_array(
-            buffer.astype(float)/np.iinfo(np.int16).max, 
-            rec.rate
-        )
-        result = classifier.classify(audio_data)
+        try:
+            buffer = rec.record_buffer()
+            audio_data = mp.tasks.components.containers.AudioData.create_from_array(
+                buffer.astype(float)/np.iinfo(np.int16).max, 
+                rec.rate
+            )
+            result = classifier.classify(audio_data)
+        except Exception as e:
+            rec.close()
+            return []
         
         """
         result = [ClassificationResult(classifications=[Classifications(categories=[Category(index=132, score=0.19921875, display_name='', category_name='Music'), Category(index=133, score=0.08203125, display_name='', category_name='Musical instrument'), Category(index=158, score=0.05859375, display_name='', category_name='Drum machine'), Category(index=500, score=0.05859375, display_name='', category_name='Inside, small room'), Category(index=153, score=0.05859375, display_name='', category_name='Synthesizer')], head_index=0, head_name='scores')], timestamp_ms=0), ClassificationResult(classifications=[Classifications(categories=[Category(index=132, score=0.66796875, display_name='', category_name='Music'), Category(index=159, score=0.19921875, display_name='', category_name='Drum'), Category(index=156, score=0.19921875, display_name='', category_name='Percussion'), Category(index=133, score=0.1484375, display_name='', category_name='Musical instrument'), Category(index=168, score=0.08203125, display_name='', category_name='Wood block')], head_index=0, head_name='scores')], timestamp_ms=975), ClassificationResult(classifications=[Classifications(categories=[Category(index=132, score=0.08203125, display_name='', category_name='Music'), Category(index=494, score=0.05859375, display_name='', category_name='Silence'), Category(index=498, score=0.04296875, display_name='', category_name='Sound effect'), Category(index=0, score=0.01953125, display_name='', category_name='Speech'), Category(index=153, score=0.01171875, display_name='', category_name='Synthesizer')], head_index=0, head_name='scores')], timestamp_ms=1950)]
@@ -83,6 +87,7 @@ class Classifier():
         """
 
         # Close the recorder to release resources.
+        
         rec.close()
 
         # Extract timestamp and corresponding category name from result.
